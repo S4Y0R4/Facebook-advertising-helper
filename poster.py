@@ -291,10 +291,8 @@ class Poster:
             self.gui.status_switch_stop_posting_btn()
             self.gui.status_switch_open_btn()
             self.gui.status_switch_text_field()
-            print("Posting is over. Now you can choose another .txt file")
             return mb.showinfo("Posting is over", "Now you can choose another .txt file")
         else:
-            print("ERROR" + ": " + "Link to group can not be empty")
             return mb.showerror("Error", "Link to group can not be empty")
 
     def is_loading_post_pl_disappeared(self):

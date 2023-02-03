@@ -53,7 +53,6 @@ class AutoPosterGUI(threading.Thread):
                                                     on_open_file=self.poster.handle_open_file))
         self.label_group = customtkinter.CTkLabel(master=self.win, text="The link for the processed group will be here")
         self.text_txt = customtkinter.CTkTextbox(master=self.win, width=310)
-        # self.checkbox = customtkinter.CTkCheckBox(master=self.win, text="On/off logger", onvalue="on", offvalue="off")
         self.setup_gui()
 
     def stop_execution(self):
