@@ -152,4 +152,5 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
             self.poster.current_driver.quit()
-            self.win.destroy()
+            self.win.after(100, self.win.destroy)
+

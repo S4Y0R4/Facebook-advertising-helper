@@ -29,6 +29,8 @@ PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div
                      "div/div[1]/div/div/div[1]/div/div[3]/div[1]/div" \
                      "[2]/div[4]/div/span/div/div/div[1]/div/div/div[1]/i"
 
+DODAJ_DO_POSTA = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
+
 ANOTHER_PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[" \
                              "1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[2]/div[2]/div/span/div/div/div" \
                              "[1]/div/div/div[1]/i"
@@ -53,7 +55,7 @@ class Poster:
         self.links = set()
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--disable-notifications")
-        self.options.headless = True
+        self.options.headless = False
         self.current_driver = None
         self.language_id = 0  # if = 0 PL, 1 - ENG, 2 - RU
 
@@ -155,6 +157,17 @@ class Poster:
             print("ERROR" + ": " + "ANOTHER_PICTURE_BUTTON was not found")
             return False
 
+    def is_dodaj_do_posta_button_exist(self) -> bool:
+        try:
+            WebDriverWait(self.current_driver, 2, 0.3).until(
+                ec.visibility_of_element_located((By.XPATH, DODAJ_DO_POSTA)))
+            print("DODAJ_DO_POSTA was found")
+            return True
+        except TimeoutException:
+            print("ERROR" + ": " + "DODAJ_DO_POSTA was not found")
+            return False
+
+
     def is_cookie_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
@@ -166,7 +179,7 @@ class Poster:
             return False
 
     def is_text_field_in_group_exist(self) -> bool:
-        if self.is_people_button_exist() or self.is_another_people_button_exist():
+        if self.is_dodaj_do_posta_button_exist():
             print("TEXT FIELD IS EXIST")
             return True
         else:
