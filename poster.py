@@ -21,28 +21,27 @@ PICTURE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[3]/di
 
 ANOTHER_PICTURE_BUTTON_PATH = "/html/body/div[1]/div[1]/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[2]/div[1]/span[1]/i"
 
-WRITE_SOMETHING_PATH = "//*[contains(text(), 'Napisz coś...')]"
 
-# WRITE_SOMETHING_PATH = ["//*[contains(text(), 'Napisz coś...')]", "//*[contains(text(), 'Write something...')]", "//*[contains(text(), 'Напишите что-нибудь...')]"]
+WRITE_SOMETHING_PATH = ["//*[contains(text(), 'Napisz coś...')]", "//*[contains(text(), 'Write something...')]",
+                        "//*[contains(text(), 'Напишите что-нибудь...')]"]
 
 PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/" \
                      "div/div[1]/div/div/div[1]/div/div[3]/div[1]/div" \
                      "[2]/div[4]/div/span/div/div/div[1]/div/div/div[1]/i"
 
-DODAJ_DO_POSTA = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
+ADD_TO_POST = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
 
 ANOTHER_PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[" \
                              "1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[2]/div[2]/div/span/div/div/div" \
                              "[1]/div/div/div[1]/i"
 
-LOADING_POST_PL = "//span[text()='Publikowanie']"
+LOADING_POST = ["//span[text()='Publikowanie']", "//span[text()='Posting']", "//span[text()='Публикация']"]
 
-# LOADING_POST_PL = ("//span[text()='Publikowanie']", "//span[text()='Posting']", "//span[text()='Публикация']")
+STREAM_BUTTON = ["//span[text()='Transmisja wideo na żywo']", "//span[text()='Live video']",
+                 "//span[text()='Прямой эфир']"]
 
-
-BLOCK_WARNING = "//span[text()='powiadom nas o tym']"
-
-# BLOCK_WARNING = ("//span[text()='powiadom nas o tym']", "//span[text()='let us know']", "//span[text()='дайте нам знать']")
+BLOCK_WARNING = ["//span[text()='powiadom nas o tym']", "//span[text()='let us know']",
+                 "//span[text()='дайте нам знать']"]
 
 CAN_NOT_POSTING_ALERT = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div"
 
@@ -81,6 +80,17 @@ class Poster:
 
     def stop_execution(self):
         self.is_posting = False
+
+    def what_is_language(self):
+        self.language_id = 0
+        for i in STREAM_BUTTON:
+            try:
+                WebDriverWait(self.current_driver, 2, 0.3).until(
+                    ec.visibility_of_element_located((By.XPATH, i)))
+                print(f'Current language id is {self.language_id}')
+                return self.language_id
+            except TimeoutException:
+                self.language_id += 1
 
     def auth(self, login, password) -> None:
         if self.is_cookie_button_exist():
@@ -122,7 +132,6 @@ class Poster:
         try:
             WebDriverWait(self.current_driver, 1, 0.25).until(
                 ec.visibility_of_element_located((By.XPATH, CAN_NOT_POSTING_ALERT)))
-            print("WARNING BAN IS COMING")
             return True
         except TimeoutException:
             return False
@@ -131,79 +140,62 @@ class Poster:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, HOME_BUTTON_PATH)))
-            print("HOME_BUTTON was found")
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "HOME_BUTTON was not found")
             return False
 
     def is_picture_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, PICTURE_BUTTON_PATH)))
-            print("PICTURE_BUTTON was found")
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "PICTURE_BUTTON was not found")
             return False
 
     def is_another_picture_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, ANOTHER_PICTURE_BUTTON_PATH)))
-            print("ANOTHER_PICTURE_BUTTON was found")
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "ANOTHER_PICTURE_BUTTON was not found")
             return False
 
-    def is_dodaj_do_posta_button_exist(self) -> bool:
+    def is_add_to_post_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
-                ec.visibility_of_element_located((By.XPATH, DODAJ_DO_POSTA)))
-            print("DODAJ_DO_POSTA was found")
+                ec.visibility_of_element_located((By.XPATH, ADD_TO_POST)))
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "DODAJ_DO_POSTA was not found")
             return False
-
 
     def is_cookie_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, COOKIE_BUTTON_PATH)))
-            print("COOKIE_BUTTON was found")
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "COOKIE_BUTTON was not found (its probably ok)")
             return False
 
     def is_text_field_in_group_exist(self) -> bool:
-        if self.is_dodaj_do_posta_button_exist():
-            print("TEXT FIELD IS EXIST")
+        if self.is_add_to_post_button_exist():
             return True
         else:
-            print("ERROR" + ": " + "TEXT FIELD IS NOT EXIST")
             return False
 
     def is_people_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, PEOPLE_BUTTON_PATH)))
-            print("PEOPLE_BUTTON was found")
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "PEOPLE_BUTTON was not found")
             return False
 
     def is_another_people_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, ANOTHER_PEOPLE_BUTTON_PATH)))
-            print("ANOTHER_PEOPLE_BUTTON was found")
             return True
         except TimeoutException:
-            print ("ERROR" + ": " + "ANOTHER_PEOPLE_BUTTON was not found")
             return False
 
     def home_page(self):
@@ -257,18 +249,16 @@ class Poster:
     def is_write_something_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
-                ec.visibility_of_element_located((By.XPATH, WRITE_SOMETHING_PATH)))
-            print("WRITE_SOMETHING_PATH was found")
+                ec.visibility_of_element_located((By.XPATH, WRITE_SOMETHING_PATH[self.language_id])))
             return True
         except TimeoutException:
-            print("ERROR" + ": " + "WRITE_SOMETHING_PATH was not found, or change ur FB language to ENG, RU, OR PL")
             self.language_id += 1
             return False
 
     def start_posting(self, message_to_post):
         if self.is_links_not_empty():
             self.is_posting = True
-            print("posting button status was changed to normal")
+            self.what_is_language()
             self.gui.status_switch_text_field()
             self.gui.status_switch_posting_btn()
             self.gui.status_switch_stop_posting_btn()
@@ -279,7 +269,7 @@ class Poster:
                     self.current_driver.get(group)
                     self.gui.handle_link_changed(group)
                     if self.is_write_something_exist():
-                        write_something = self.current_driver.find_element(By.XPATH, WRITE_SOMETHING_PATH)
+                        write_something = self.current_driver.find_element(By.XPATH, WRITE_SOMETHING_PATH[self.language_id])
                         button = self.get_clickable_button(write_something)
                         button.click()
                     if self.is_text_field_in_group_exist():
@@ -291,12 +281,9 @@ class Poster:
                             self.gui.status_switch_stop_posting_btn()
                             self.gui.status_switch_open_btn()
                             self.gui.status_switch_text_field()
-                            print("WARNING" + ": " + "A blocking warning has been received, it is recommended that you \
-                            end your account")
                         else:
                             self.is_loading_post_pl_disappeared()
                     else:
-                        print("ERROR" + ": " + "text field in group is not exist")
                         continue
             self.home_page()
             self.is_posting = False
@@ -311,14 +298,13 @@ class Poster:
     def is_loading_post_pl_disappeared(self):
         while True:
             try:
-                self.current_driver.find_element(By.XPATH, LOADING_POST_PL)
+                self.current_driver.find_element(By.XPATH, LOADING_POST[self.language_id])
             except NoSuchElementException:
                 break
 
     def is_block_warning_exist(self):
         try:
-            self.current_driver.find_element(By.XPATH, BLOCK_WARNING)
-            print("BLOCK WARNING!!!")
+            self.current_driver.find_element(By.XPATH, BLOCK_WARNING[self.language_id])
             mb.showwarning("BLOCK WARNING!",
                            """The account has been temporarily suspended, please restart the program as a different\
 user. To avoid this, please use the program wisely!""")

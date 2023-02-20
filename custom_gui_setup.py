@@ -92,26 +92,26 @@ class AutoPosterGUI(threading.Thread):
     @staticmethod
     def how_to_use() -> str:
         info = """EN:
-To use the script correctly, please don't try to break it, make sure you have a .txt file with the correct group links \
-. If you need to make two identical posts in a row, just duplicate the link in your file. Do not worry about your data,\
- the script code is free and you can analyze it if necessary.So far, the ability to post emoji has not been implemented\
- (with the exception of those characters that Meta itself interpretst into emoticons, like ':)' and so on... I hope to \
-do that later.)
-Be careful, for the script to work correctly, the language of your Facebook account must be either Russian, or English,\
- or Polish. If you need another language, then write about it to my mail or github.
-Do not worry about your data, the script code is open-source and you can analyze it if necessary.
+To use the script correctly, please don't try to break it, make sure you have a .txt file with the correct group links.\
+ If you need to make two subsequent posts in a row, just duplicate the post in the next file. So far, the ability to po\
+st emojis has not been implemented (with the exception of those characters that Facebook itself interprets, for example\
+, ':)' and so on ... I hope to do this later.)
+Сarefully, for the script to work correctly, the language of your Facebook account must be either Russian, or English, \
+or Polish. If you need another language, then write to me about it.
+Don't worry about the data, the script code is free and you can view it if needed.
+
 RU:
 Для правильного использования скрипта, пожалуйста, не пытайтесь его сломать, убедитесь, что у вас создан .txt файл с ну\
 жными ссылками на группы. Если вам необходимо сделать два одинаковых поста подряд, просто продублируйте ссылку в вашем \
 файле. Пока что не реализована возможность постить эмоджи (за исключением тех символов, которые интерпритирует сам Face\
 book, например ':)' и тд... Надеюсь, сделаю это позже.)
 Будьте внимательны, для корреткной работы скрипта, язык вашего Facebook аккаунта должен быть либо русским, либо английс\
-ким, либо польским. Если вам будет необходим другой язык, то напишите об этом мне на почту или в гитхаб.
+ким, либо польским. Если вам будет необходим другой язык, то напишите об этом мне.
 Не беспокойтесь за ваши данные, код скрипта свободный и при необходимости вы можете его проанализировать.
 
-***************************
+*****************************
  https://github.com/S4Y0R4
-***************************
+*****************************
 """
         return mb.showinfo("Information", info)
 
