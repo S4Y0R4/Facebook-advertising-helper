@@ -34,9 +34,9 @@ class AutoPosterGUI(threading.Thread):
         self.win.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.login_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your login or number", width=200)
         self.auth_btn = customtkinter.CTkButton(master=self.win, text="Authentication", width=100,
-                                                command=lambda: threading.Thread(
-                                                    target=self.poster.handle_login(self.login_entry.get(),
-                                                                                    self.password_entry.get())).start())
+                                                command=lambda:
+                                                self.poster.handle_login(self.login_entry.get(),
+                                                                         self.password_entry.get()))
 
         self.help_btn = customtkinter.CTkButton(master=self.win, text="Help me!", width=100, command=self.how_to_use)
         self.password_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your password", width=200,
@@ -153,4 +153,3 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
         if mb.askokcancel("Quit", "Do you want to quit?"):
             self.poster.current_driver.quit()
             self.win.after(100, self.win.destroy)
-
