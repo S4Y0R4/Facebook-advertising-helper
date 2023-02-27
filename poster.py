@@ -247,11 +247,14 @@ class Poster:
         return parent.find_element(By.XPATH, "..")
 
     def is_write_something_exist(self) -> bool:
+        self.language_id = 0
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, WRITE_SOMETHING_PATH[self.language_id])))
             return True
         except TimeoutException:
+            if self.language_id > len(WRITE_SOMETHING_PATH):
+                return False
             self.language_id += 1
             return False
 

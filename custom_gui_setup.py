@@ -45,8 +45,7 @@ class AutoPosterGUI(threading.Thread):
                                                         command=self.stop_execution)
 
         self.posting_btn = customtkinter.CTkButton(master=self.win, text="Start posting!", width=100,
-                                                   command=lambda: threading.Thread(target=self.start_posting,
-                                                                                    daemon=True).start())
+                                                   command=lambda: threading.Thread(target=self.start_posting).start())
 
         self.open_btn = customtkinter.CTkButton(master=self.win, text="Open file", width=100,
                                                 command=lambda: file_dialog_wrapper(
@@ -58,6 +57,7 @@ class AutoPosterGUI(threading.Thread):
     def stop_execution(self):
         if self.poster.is_posting:
             self.poster.stop_execution()
+            print(threading.active_count(),'count of threads after stop_posting')
 
     def start_posting(self):
         if not self.poster.is_posting:
@@ -85,6 +85,7 @@ class AutoPosterGUI(threading.Thread):
 
     def handle_posting_started(self):
         print('posting started', self)
+        print(threading.active_count())
 
     def handle_auth_btn(self):
         self.auth_btn.grid(row=0, column=1, padx=5, pady=5, rowspan=2, sticky="ns")
