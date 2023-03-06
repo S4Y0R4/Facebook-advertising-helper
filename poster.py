@@ -82,15 +82,17 @@ class Poster:
         self.is_posting = False
 
     def what_is_language(self):
-        self.language_id = 0
         for i in STREAM_BUTTON:
             try:
                 WebDriverWait(self.current_driver, 2, 0.3).until(
                     ec.visibility_of_element_located((By.XPATH, i)))
-                print(f'Current language id is {self.language_id}')
+                print(f'Current language id is {STREAM_BUTTON[self.language_id]}')
                 return self.language_id
             except TimeoutException:
                 self.language_id += 1
+                if self.language_id > len(STREAM_BUTTON):
+                    self.home_page()
+                    mb.showerror("Your account language is not supported, switch it to PL, ENG or RUS")
 
     def auth(self, login, password) -> None:
         if self.is_cookie_button_exist():
@@ -111,6 +113,7 @@ class Poster:
         self.gui.handle_logged_in()
         self.gui.status_switch_auth_btn()
         self.gui.status_switch_stop_posting_btn()
+        self.what_is_language()
 
     def is_logged_in(self) -> bool:
         if self.is_home_button_exist():
@@ -247,21 +250,16 @@ class Poster:
         return parent.find_element(By.XPATH, "..")
 
     def is_write_something_exist(self) -> bool:
-        self.language_id = 0
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
                 ec.visibility_of_element_located((By.XPATH, WRITE_SOMETHING_PATH[self.language_id])))
             return True
         except TimeoutException:
-            if self.language_id > len(WRITE_SOMETHING_PATH):
-                return False
-            self.language_id += 1
             return False
 
     def start_posting(self, message_to_post):
         if self.is_links_not_empty():
             self.is_posting = True
-            self.what_is_language()
             self.gui.status_switch_text_field()
             self.gui.status_switch_posting_btn()
             self.gui.status_switch_stop_posting_btn()
