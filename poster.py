@@ -21,7 +21,6 @@ PICTURE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[3]/di
 
 ANOTHER_PICTURE_BUTTON_PATH = "/html/body/div[1]/div[1]/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[2]/div[1]/span[1]/i"
 
-
 WRITE_SOMETHING_PATH = ["//*[contains(text(), 'Napisz coś...')]", "//*[contains(text(), 'Write something...')]",
                         "//*[contains(text(), 'Напишите что-нибудь...')]"]
 
@@ -29,7 +28,7 @@ PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div
                      "div/div[1]/div/div/div[1]/div/div[3]/div[1]/div" \
                      "[2]/div[4]/div/span/div/div/div[1]/div/div/div[1]/i"
 
-ADD_TO_POST = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
+ADD_TO_POST = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
 
 ANOTHER_PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[" \
                              "1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[2]/div[2]/div/span/div/div/div" \
@@ -44,6 +43,8 @@ BLOCK_WARNING = ["//span[text()='powiadom nas o tym']", "//span[text()='let us k
                  "//span[text()='дайте нам знать']"]
 
 CAN_NOT_POSTING_ALERT = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div"
+
+STREAM_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
 
 
 class Poster:
@@ -115,8 +116,18 @@ class Poster:
         self.gui.status_switch_stop_posting_btn()
         self.what_is_language()
 
+    def is_stream_button_exist(self):
+        try:
+            WebDriverWait(self.current_driver, 2, 0.3).until(
+                ec.visibility_of_element_located((By.XPATH, STREAM_BUTTON_XPATH)))
+            return True
+        except TimeoutException:
+            return False
+
     def is_logged_in(self) -> bool:
-        if self.is_home_button_exist():
+        if self.is_stream_button_exist():
+            return True
+        elif self.is_home_button_exist():
             home_button = self.current_driver.find_element(By.XPATH, HOME_BUTTON_PATH)
             if home_button.get_attribute("data-visualcompletion") == "css-img":
                 return True
@@ -270,7 +281,8 @@ class Poster:
                     self.current_driver.get(group)
                     self.gui.handle_link_changed(group)
                     if self.is_write_something_exist():
-                        write_something = self.current_driver.find_element(By.XPATH, WRITE_SOMETHING_PATH[self.language_id])
+                        write_something = self.current_driver.find_element(By.XPATH,
+                                                                           WRITE_SOMETHING_PATH[self.language_id])
                         button = self.get_clickable_button(write_something)
                         button.click()
                     if self.is_text_field_in_group_exist():
