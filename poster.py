@@ -30,6 +30,8 @@ PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div
 
 ADD_TO_POST = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
 
+ADD_TO_POST_1 = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
+
 ANOTHER_PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[" \
                              "1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[2]/div[2]/div/span/div/div/div" \
                              "[1]/div/div/div[1]/i"
@@ -182,6 +184,14 @@ class Poster:
         except TimeoutException:
             return False
 
+    def is_add_to_post_1_button_exist(self) -> bool:
+        try:
+            WebDriverWait(self.current_driver, 2, 0.3).until(
+                ec.visibility_of_element_located((By.XPATH, ADD_TO_POST_1)))
+            return True
+        except TimeoutException:
+            return False
+
     def is_cookie_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 2, 0.3).until(
@@ -191,7 +201,7 @@ class Poster:
             return False
 
     def is_text_field_in_group_exist(self) -> bool:
-        if self.is_add_to_post_button_exist():
+        if self.is_add_to_post_button_exist() or self.is_add_to_post_1_button_exist():
             return True
         else:
             return False
