@@ -48,6 +48,10 @@ CAN_NOT_POSTING_ALERT = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div/div
 
 STREAM_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
 
+PHOTO_VIDEO_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[2]"
+
+FEELING_ACTIVITY_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
+
 
 class Poster:
     def __init__(self):
@@ -120,27 +124,32 @@ class Poster:
 
     def is_stream_button_exist(self):
         try:
-            WebDriverWait(self.current_driver, 2, 0.3).until(
+            WebDriverWait(self.current_driver, 1, 0.5).until(
                 ec.visibility_of_element_located((By.XPATH, STREAM_BUTTON_XPATH)))
             return True
         except TimeoutException:
             return False
 
-    def is_logged_in(self) -> bool:
-        if self.is_stream_button_exist():
+    def is_photo_video_button_exist(self):
+        try:
+            WebDriverWait(self.current_driver, 1, 0.5).until(
+                ec.visibility_of_element_located((By.XPATH, PHOTO_VIDEO_BUTTON_XPATH)))
             return True
-        elif self.is_home_button_exist():
-            home_button = self.current_driver.find_element(By.XPATH, HOME_BUTTON_PATH)
-            if home_button.get_attribute("data-visualcompletion") == "css-img":
-                return True
-        elif self.is_picture_button_exist():
-            picture_button = self.current_driver.find_element(By.XPATH, PICTURE_BUTTON_PATH)
-            if picture_button.get_attribute("data-visualcompletion") == "css-img":
-                return True
-        elif self.is_another_picture_button_exist():
-            picture_button = self.current_driver.find_element(By.XPATH, ANOTHER_PICTURE_BUTTON_PATH)
-            if picture_button.get_attribute("data-visualcompletion") == "css-img":
-                return True
+        except TimeoutException:
+            return False
+
+    def is_feeling_activity_button_exist(self):
+        try:
+            WebDriverWait(self.current_driver, 1, 0.5).until(
+                ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH)))
+            return True
+        except TimeoutException:
+            return False
+
+    def is_logged_in(self) -> bool:
+        if self.is_stream_button_exist() or self.is_photo_video_button_exist() or \
+                self.is_feeling_activity_button_exist():
+            return True
         else:
             return False
 
@@ -295,15 +304,12 @@ class Poster:
                                                                            WRITE_SOMETHING_PATH[self.language_id])
                         button = self.get_clickable_button(write_something)
                         button.click()
+                    else:
+                        continue
                     if self.is_text_field_in_group_exist():
                         self.write_message(message_to_post)
                         if self.is_can_not_posting_alert_exist() or self.is_block_warning_exist():
-                            self.home_page()
-                            self.is_posting = False
-                            self.gui.status_switch_posting_btn()
-                            self.gui.status_switch_stop_posting_btn()
-                            self.gui.status_switch_open_btn()
-                            self.gui.status_switch_text_field()
+                            continue
                         else:
                             self.is_loading_post_pl_disappeared()
                     else:
