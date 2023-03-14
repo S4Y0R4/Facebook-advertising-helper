@@ -13,9 +13,8 @@ def file_dialog_wrapper(on_open_file):
     on_open_file(file_path)
 
 
-class AutoPosterGUI(threading.Thread):
+class AutoPosterGUI:
     def __init__(self, poster: p.Poster):
-        threading.Thread.__init__(self)
         self.posting_btn = None
         self.stop_posting_btn = None
         self.open_btn = None
@@ -27,25 +26,23 @@ class AutoPosterGUI(threading.Thread):
         self.poster = poster
         self.help_btn = None
         self.label_group = None
-        self.start()
 
     def run(self) -> None:
         self.win = customtkinter.CTk()
         self.win.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.login_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your login or number", width=200)
         self.auth_btn = customtkinter.CTkButton(master=self.win, text="Authentication", width=100,
-                                                command=lambda:
-                                                self.poster.handle_login(self.login_entry.get(),
-                                                                         self.password_entry.get()))
+                                                command=lambda: self.poster.handle_login(self.login_entry.get(),
+                                                                                         self.password_entry.get()))
 
         self.help_btn = customtkinter.CTkButton(master=self.win, text="Help me!", width=100, command=self.how_to_use)
         self.password_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your password", width=200,
                                                      show="*")
         self.stop_posting_btn = customtkinter.CTkButton(master=self.win, text="Stop posting!", width=100,
-                                                        command=self.stop_execution)
+                                                        command=lambda: self.poster.stop_execution())
 
         self.posting_btn = customtkinter.CTkButton(master=self.win, text="Start posting!", width=100,
-                                                   command=lambda: threading.Thread(target=self.start_posting).start())
+                                                   command=lambda: self.start_posting())
 
         self.open_btn = customtkinter.CTkButton(master=self.win, text="Open file", width=100,
                                                 command=lambda: file_dialog_wrapper(
@@ -54,16 +51,10 @@ class AutoPosterGUI(threading.Thread):
         self.text_txt = customtkinter.CTkTextbox(master=self.win, width=310)
         self.setup_gui()
 
-    def stop_execution(self):
-        if self.poster.is_posting:
-            self.poster.stop_execution()
-            print(threading.active_count(),'count of threads after stop_posting')
-
     def start_posting(self):
-        if not self.poster.is_posting:
-            self.poster.stop_execution()
         message = self.text_txt.get("0.0", "end")
-        self.poster.start_posting(message)
+        self.poster.handle_posting(message)
+
 
     def setup_gui(self):
         self.win.title("FB poster")
@@ -141,8 +132,11 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
         else:
             self.stop_posting_btn.configure(state="disabled")
 
-    def status_switch_auth_btn(self):
+    def status_switch_auth_btn_off(self):
         self.auth_btn.configure(state="disabled")
+
+    def status_switch_auth_btn_on(self):
+        self.auth_btn.configure(state="normal")
 
     def status_switch_open_btn(self):
         if self.poster.is_posting:
@@ -153,4 +147,4 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
             self.poster.current_driver.quit()
-            self.win.after(100, self.win.destroy)
+            self.win.destroy()

@@ -1,4 +1,6 @@
 import collections
+import pickle
+import threading
 import time
 from selenium.common.exceptions import NoSuchElementException
 from tkinter import messagebox as mb
@@ -47,10 +49,13 @@ BLOCK_WARNING = ["//span[text()='powiadom nas o tym']", "//span[text()='let us k
 CAN_NOT_POSTING_ALERT = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div"
 
 STREAM_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
+STREAM_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
 
 PHOTO_VIDEO_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[2]"
+PHOTO_VIDEO_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[2]"
 
 FEELING_ACTIVITY_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
+FEELING_ACTIVITY_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
 
 
 class Poster:
@@ -76,9 +81,6 @@ class Poster:
     def bind_gui(self, gui):
         self.gui = gui
 
-    def handle_login(self, login: str, password: str):
-        self.auth(login, password)
-
     def handle_open_file(self, file):
         self.set_groups_from_file(file)
 
@@ -101,26 +103,61 @@ class Poster:
                     self.home_page()
                     mb.showerror("Your account language is not supported, switch it to PL, ENG or RUS")
 
+    def handle_login(self, login: str, password: str):
+        if len(login) > 0 and len(password) > 0:
+            auth_thread = threading.Thread(target=self.auth, args=(login, password), daemon=True)
+            auth_thread.start()
+            print(threading.current_thread(), "current thread after handle login", self)
+            print(threading.active_count(), "active threads after handle login", self)
+        else:
+            mb.showwarning("Warning", "Login and password can not be empty")
+
+    def handle_posting(self, message):
+        self.is_posting = True
+        posting_thread = threading.Thread(target=self.start_posting, args=message, daemon=True)
+        posting_thread.start()
+        print(threading.current_thread(), "current thread after handle posting", self)
+        print(threading.active_count(), "active threads after handle posting", self)
+
     def auth(self, login, password) -> None:
+        self.gui.status_switch_auth_btn_off()
+        self.start_driver()
+        self.is_driver_online = True
         if self.is_cookie_button_exist():
             self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
-        email_input = self.current_driver.find_element(By.ID, "email")
-        email_input.clear()
-        email_input.send_keys(login)
-        password_input = self.current_driver.find_element(By.ID, "pass")
-        password_input.clear()
-        password_input.send_keys(password)
-        self.current_driver.find_element(By.NAME, "login").click()
+        try:
+            email_input = self.current_driver.find_element(By.ID, "email")
+            password_input = self.current_driver.find_element(By.ID, "pass")
+            email_input.clear()
+            email_input.send_keys(login)
+            password_input.clear()
+            password_input.send_keys(password)
+            self.current_driver.find_element(By.NAME, "login").click()
+        except NoSuchElementException:
+            self.current_driver.quit()
+            mb.showerror("error")
 
         if not self.is_logged_in():
+            self.current_driver.quit()
+            self.gui.status_switch_auth_btn_on()
             mb.showinfo("Warning!", "Your login or password is incorrect")
-            self.home_page()
             return
 
-        self.gui.handle_logged_in()
-        self.gui.status_switch_auth_btn()
-        self.gui.status_switch_stop_posting_btn()
+        self.save_cookies()
         self.what_is_language()
+        self.gui.handle_logged_in()
+        self.gui.status_switch_stop_posting_btn()
+        self.current_driver.quit()
+        self.is_driver_online = False
+
+    def save_cookies(self):
+        pickle.dump(self.current_driver.get_cookies(), open(f"session", "wb"))
+        print("cookies saved")
+
+    def load_cookies(self):
+        for cookie in pickle.load(open("session", "rb")):
+            self.current_driver.add_cookie(cookie)
+        print("cookies loaded")
 
     def is_stream_button_exist(self):
         try:
@@ -128,7 +165,12 @@ class Poster:
                 ec.visibility_of_element_located((By.XPATH, STREAM_BUTTON_XPATH)))
             return True
         except TimeoutException:
-            return False
+            try:
+                WebDriverWait(self.current_driver, 1, 0.5).until(
+                    ec.visibility_of_element_located((By.XPATH, STREAM_BUTTON_XPATH_1)))
+                return True
+            except TimeoutException:
+                return False
 
     def is_photo_video_button_exist(self):
         try:
@@ -136,7 +178,12 @@ class Poster:
                 ec.visibility_of_element_located((By.XPATH, PHOTO_VIDEO_BUTTON_XPATH)))
             return True
         except TimeoutException:
-            return False
+            try:
+                WebDriverWait(self.current_driver, 1, 0.5).until(
+                    ec.visibility_of_element_located((By.XPATH, PHOTO_VIDEO_BUTTON_XPATH_1)))
+                return True
+            except TimeoutException:
+                return False
 
     def is_feeling_activity_button_exist(self):
         try:
@@ -144,7 +191,12 @@ class Poster:
                 ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH)))
             return True
         except TimeoutException:
-            return False
+            try:
+                WebDriverWait(self.current_driver, 1, 0.5).until(
+                    ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH)))
+                return True
+            except TimeoutException:
+                return False
 
     def is_logged_in(self) -> bool:
         if self.is_stream_button_exist() or self.is_photo_video_button_exist() or \
@@ -289,12 +341,17 @@ class Poster:
 
     def start_posting(self, message_to_post):
         if self.is_links_not_empty():
-            self.is_posting = True
             self.gui.status_switch_text_field()
             self.gui.status_switch_posting_btn()
             self.gui.status_switch_stop_posting_btn()
             self.gui.status_switch_open_btn()
             self.gui.handle_posting_started()
+            self.start_driver()
+            self.is_driver_online = True
+            self.load_cookies()
+            self.home_page()
+            if self.is_cookie_button_exist():
+                self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
             for group in self.links:
                 if self.is_posting:
                     self.current_driver.get(group)
@@ -311,20 +368,23 @@ class Poster:
                         if self.is_can_not_posting_alert_exist() or self.is_block_warning_exist():
                             continue
                         else:
-                            self.is_loading_post_pl_disappeared()
+                            self.is_loading_post_disappeared()
+                            continue
                     else:
                         continue
-            self.home_page()
-            self.is_posting = False
+                break
+            self.current_driver.quit()
             self.gui.status_switch_posting_btn()
             self.gui.status_switch_stop_posting_btn()
             self.gui.status_switch_open_btn()
             self.gui.status_switch_text_field()
-            return mb.showinfo("Posting is over", "Now you can choose another .txt file")
+            mb.showinfo("Posting is over", "Now you can choose another .txt file")
+            self.is_driver_online = False
+            return self.is_driver_online
         else:
             return mb.showerror("Error", "Link to group can not be empty")
 
-    def is_loading_post_pl_disappeared(self):
+    def is_loading_post_disappeared(self):
         while True:
             try:
                 self.current_driver.find_element(By.XPATH, LOADING_POST[self.language_id])
