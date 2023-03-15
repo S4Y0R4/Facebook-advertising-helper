@@ -95,7 +95,7 @@ class Poster:
             try:
                 WebDriverWait(self.current_driver, 2, 0.3).until(
                     ec.visibility_of_element_located((By.XPATH, i)))
-                print(f'Current language id is {STREAM_BUTTON[self.language_id]}')
+
                 return self.language_id
             except TimeoutException:
                 self.language_id += 1
@@ -107,8 +107,7 @@ class Poster:
         if len(login) > 0 and len(password) > 0:
             auth_thread = threading.Thread(target=self.auth, args=(login, password), daemon=True)
             auth_thread.start()
-            print(threading.current_thread(), "current thread after handle login", self)
-            print(threading.active_count(), "active threads after handle login", self)
+
         else:
             mb.showwarning("Warning", "Login and password can not be empty")
 
@@ -116,8 +115,6 @@ class Poster:
         self.is_posting = True
         posting_thread = threading.Thread(target=self.start_posting, args=message, daemon=True)
         posting_thread.start()
-        print(threading.current_thread(), "current thread after handle posting", self)
-        print(threading.active_count(), "active threads after handle posting", self)
 
     def auth(self, login, password) -> None:
         self.gui.status_switch_auth_btn_off()
@@ -152,12 +149,10 @@ class Poster:
 
     def save_cookies(self):
         pickle.dump(self.current_driver.get_cookies(), open(f"session", "wb"))
-        print("cookies saved")
 
     def load_cookies(self):
         for cookie in pickle.load(open("session", "rb")):
             self.current_driver.add_cookie(cookie)
-        print("cookies loaded")
 
     def is_stream_button_exist(self):
         try:
@@ -345,7 +340,6 @@ class Poster:
             self.gui.status_switch_posting_btn()
             self.gui.status_switch_stop_posting_btn()
             self.gui.status_switch_open_btn()
-            self.gui.handle_posting_started()
             self.start_driver()
             self.is_driver_online = True
             self.load_cookies()

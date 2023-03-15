@@ -1,6 +1,5 @@
 from tkinter import filedialog as fd
 from tkinter import messagebox as mb
-import threading
 import poster as p
 import customtkinter
 
@@ -35,7 +34,8 @@ class AutoPosterGUI:
                                                 command=lambda: self.poster.handle_login(self.login_entry.get(),
                                                                                          self.password_entry.get()))
 
-        self.help_btn = customtkinter.CTkButton(master=self.win, text="Help me!", width=100, command=self.how_to_use)
+        self.help_btn = customtkinter.CTkButton(master=self.win, text="Help me!", width=100,
+                                                command=lambda: self.how_to_use())
         self.password_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your password", width=200,
                                                      show="*")
         self.stop_posting_btn = customtkinter.CTkButton(master=self.win, text="Stop posting!", width=100,
@@ -55,7 +55,6 @@ class AutoPosterGUI:
         message = self.text_txt.get("0.0", "end")
         self.poster.handle_posting(message)
 
-
     def setup_gui(self):
         self.win.title("FB poster")
         self.win.geometry("430x362")
@@ -74,15 +73,11 @@ class AutoPosterGUI:
         self.login_entry.grid(row=0, column=0, padx=5, pady=5, sticky="nw")
         self.password_entry.grid(row=1, column=0, padx=5, pady=5, sticky="nw")
 
-    def handle_posting_started(self):
-        print('posting started', self)
-        print(threading.active_count())
-
     def handle_auth_btn(self):
         self.auth_btn.grid(row=0, column=1, padx=5, pady=5, rowspan=2, sticky="ns")
 
     @staticmethod
-    def how_to_use() -> str:
+    def how_to_use():
         info = """EN:
 To use the script correctly, please don't try to break it, make sure you have a .txt file with the correct group links.\
  If you need to make two subsequent posts in a row, just duplicate the post in the next file. So far, the ability to po\
@@ -146,5 +141,6 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
 
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
-            self.poster.current_driver.quit()
+            if self.poster.is_driver_online:
+                self.poster.current_driver.quit()
             self.win.destroy()
