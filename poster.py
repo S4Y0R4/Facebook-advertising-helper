@@ -2,7 +2,7 @@ import collections
 import pickle
 import threading
 import time
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 from tkinter import messagebox as mb
 from selenium import webdriver
 from selenium.webdriver import ActionChains, Keys
@@ -95,7 +95,6 @@ class Poster:
             try:
                 WebDriverWait(self.current_driver, 2, 0.3).until(
                     ec.visibility_of_element_located((By.XPATH, i)))
-
                 return self.language_id
             except TimeoutException:
                 self.language_id += 1
@@ -107,45 +106,47 @@ class Poster:
         if len(login) > 0 and len(password) > 0:
             auth_thread = threading.Thread(target=self.auth, args=(login, password), daemon=True)
             auth_thread.start()
-
         else:
             mb.showwarning("Warning", "Login and password can not be empty")
 
     def handle_posting(self, message):
-        self.is_posting = True
-        posting_thread = threading.Thread(target=self.start_posting, args=message, daemon=True)
+        posting_thread = threading.Thread(target=self.start_posting, args=(message,), daemon=True)
         posting_thread.start()
 
     def auth(self, login, password) -> None:
-        self.gui.status_switch_auth_btn_off()
-        self.start_driver()
-        self.is_driver_online = True
-        if self.is_cookie_button_exist():
-            self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
         try:
-            email_input = self.current_driver.find_element(By.ID, "email")
-            password_input = self.current_driver.find_element(By.ID, "pass")
-            email_input.clear()
-            email_input.send_keys(login)
-            password_input.clear()
-            password_input.send_keys(password)
-            self.current_driver.find_element(By.NAME, "login").click()
-        except NoSuchElementException:
-            self.current_driver.quit()
-            mb.showerror("error")
+            self.gui.status_switch_auth_btn_off()
+            self.start_driver()
+            self.is_driver_online = True
+            if self.is_cookie_button_exist():
+                self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
+            try:
+                email_input = self.current_driver.find_element(By.ID, "email")
+                password_input = self.current_driver.find_element(By.ID, "pass")
+                email_input.clear()
+                email_input.send_keys(login)
+                password_input.clear()
+                password_input.send_keys(password)
+                self.current_driver.find_element(By.NAME, "login").click()
+            except NoSuchElementException:
+                self.current_driver.quit()
+                mb.showerror("error")
 
-        if not self.is_logged_in():
-            self.current_driver.quit()
-            self.gui.status_switch_auth_btn_on()
-            mb.showinfo("Warning!", "Your login or password is incorrect")
-            return
+            if not self.is_logged_in():
+                self.current_driver.quit()
+                self.gui.status_switch_auth_btn_on()
+                mb.showinfo("Warning!", "Your login or password is incorrect")
+                return
 
-        self.save_cookies()
-        self.what_is_language()
-        self.gui.handle_logged_in()
-        self.gui.status_switch_stop_posting_btn()
-        self.current_driver.quit()
-        self.is_driver_online = False
+            self.save_cookies()
+            self.what_is_language()
+            self.gui.handle_logged_in()
+            self.gui.status_switch_stop_posting_btn()
+            self.current_driver.quit()
+            self.is_driver_online = False
+
+        except InvalidSessionIdException:
+            pass
 
     def save_cookies(self):
         pickle.dump(self.current_driver.get_cookies(), open(f"session", "wb"))
@@ -154,7 +155,7 @@ class Poster:
         for cookie in pickle.load(open("session", "rb")):
             self.current_driver.add_cookie(cookie)
 
-    def is_stream_button_exist(self):
+    def is_stream_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 1, 0.5).until(
                 ec.visibility_of_element_located((By.XPATH, STREAM_BUTTON_XPATH)))
@@ -167,7 +168,7 @@ class Poster:
             except TimeoutException:
                 return False
 
-    def is_photo_video_button_exist(self):
+    def is_photo_video_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 1, 0.5).until(
                 ec.visibility_of_element_located((By.XPATH, PHOTO_VIDEO_BUTTON_XPATH)))
@@ -180,7 +181,7 @@ class Poster:
             except TimeoutException:
                 return False
 
-    def is_feeling_activity_button_exist(self):
+    def is_feeling_activity_button_exist(self) -> bool:
         try:
             WebDriverWait(self.current_driver, 1, 0.5).until(
                 ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH)))
@@ -198,14 +199,6 @@ class Poster:
                 self.is_feeling_activity_button_exist():
             return True
         else:
-            return False
-
-    def is_can_not_posting_alert_exist(self):
-        try:
-            WebDriverWait(self.current_driver, 1, 0.25).until(
-                ec.visibility_of_element_located((By.XPATH, CAN_NOT_POSTING_ALERT)))
-            return True
-        except TimeoutException:
             return False
 
     def is_home_button_exist(self) -> bool:
@@ -295,7 +288,8 @@ class Poster:
                 for link in file:
                     self.links.add(link)
                 file.close()
-        self.gui.handle_auth_btn()
+        if len(self.links):
+            self.gui.handle_auth_btn()
 
     @staticmethod
     def count_lines(message: str):
@@ -334,47 +328,45 @@ class Poster:
         except TimeoutException:
             return False
 
-    def start_posting(self, message_to_post):
+    def start_posting(self, message):
         if self.is_links_not_empty():
-            self.gui.status_switch_text_field()
-            self.gui.status_switch_posting_btn()
-            self.gui.status_switch_stop_posting_btn()
-            self.gui.status_switch_open_btn()
-            self.start_driver()
-            self.is_driver_online = True
-            self.load_cookies()
-            self.home_page()
-            if self.is_cookie_button_exist():
-                self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
-            for group in self.links:
-                if self.is_posting:
-                    self.current_driver.get(group)
-                    self.gui.handle_link_changed(group)
-                    if self.is_write_something_exist():
-                        write_something = self.current_driver.find_element(By.XPATH,
-                                                                           WRITE_SOMETHING_PATH[self.language_id])
-                        button = self.get_clickable_button(write_something)
-                        button.click()
-                    else:
-                        continue
-                    if self.is_text_field_in_group_exist():
-                        self.write_message(message_to_post)
-                        if self.is_can_not_posting_alert_exist() or self.is_block_warning_exist():
-                            continue
+            try:
+                self.gui.status_switch_text_field()
+                self.gui.status_switch_posting_btn()
+                self.gui.status_switch_stop_posting_btn()
+                self.gui.status_switch_open_btn()
+                self.start_driver()
+                self.is_driver_online = True
+                self.load_cookies()
+                self.home_page()
+                if self.is_cookie_button_exist():
+                    self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
+                for group in self.links:
+                    if self.is_posting:
+                        self.current_driver.get(group)
+                        self.gui.handle_link_changed(group)
+                        if self.is_write_something_exist():
+                            write_something = self.current_driver.find_element(By.XPATH,
+                                                                               WRITE_SOMETHING_PATH[self.language_id])
+                            button = self.get_clickable_button(write_something)
+                            button.click()
                         else:
+                            continue
+                        if self.is_text_field_in_group_exist():
+                            self.write_message(message)
                             self.is_loading_post_disappeared()
                             continue
-                    else:
-                        continue
-                break
-            self.current_driver.quit()
-            self.gui.status_switch_posting_btn()
-            self.gui.status_switch_stop_posting_btn()
-            self.gui.status_switch_open_btn()
-            self.gui.status_switch_text_field()
-            mb.showinfo("Posting is over", "Now you can choose another .txt file")
-            self.is_driver_online = False
-            return self.is_driver_online
+            except InvalidSessionIdException:
+                pass
+            finally:
+                self.current_driver.quit()
+                self.gui.status_switch_posting_btn()
+                self.gui.status_switch_stop_posting_btn()
+                self.gui.status_switch_open_btn()
+                self.gui.status_switch_text_field()
+                mb.showinfo("Posting is over", "Now you can choose another .txt file")
+                self.is_driver_online = False
+                return self.is_driver_online
         else:
             return mb.showerror("Error", "Link to group can not be empty")
 
@@ -384,13 +376,3 @@ class Poster:
                 self.current_driver.find_element(By.XPATH, LOADING_POST[self.language_id])
             except NoSuchElementException:
                 break
-
-    def is_block_warning_exist(self):
-        try:
-            self.current_driver.find_element(By.XPATH, BLOCK_WARNING[self.language_id])
-            mb.showwarning("BLOCK WARNING!",
-                           """The account has been temporarily suspended, please restart the program as a different\
-user. To avoid this, please use the program wisely!""")
-            return True
-        except NoSuchElementException:
-            return False

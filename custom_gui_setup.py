@@ -52,6 +52,7 @@ class AutoPosterGUI:
         self.setup_gui()
 
     def start_posting(self):
+        self.poster.is_posting = True
         message = self.text_txt.get("0.0", "end")
         self.poster.handle_posting(message)
 
