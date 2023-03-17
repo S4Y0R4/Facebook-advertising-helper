@@ -2,6 +2,9 @@ import collections
 import pickle
 import threading
 import time
+import win32clipboard
+import io
+from PIL import Image
 from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 from tkinter import messagebox as mb
 from selenium import webdriver
@@ -68,6 +71,7 @@ class Poster:
         self.options.add_argument("--disable-notifications")
         self.options.headless = False
         self.current_driver = None
+        self.pic_path = None
         self.language_id = 0  # if = 0 PL, 1 - ENG, 2 - RU
 
     def start_driver(self):
@@ -83,6 +87,9 @@ class Poster:
 
     def handle_open_file(self, file):
         self.set_groups_from_file(file)
+
+    def handle_open_pic(self, file):
+        self.pic_path = file
 
     def handle_check_box(self):
         return self.gui.checkbox.get()
@@ -291,6 +298,18 @@ class Poster:
         if len(self.links):
             self.gui.handle_auth_btn()
 
+    def get_picture(self, file_path: str):
+        if self.is_file_path_not_empty(file_path):
+            image = Image.open(file_path)
+            output = io.BytesIO()
+            image.convert("RGB").save(output, "BMP")
+            data = output.getvalue()[14:]
+            output.close()
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+            win32clipboard.CloseClipboard()
+
     @staticmethod
     def count_lines(message: str):
         counter = collections.Counter(message)
@@ -306,7 +325,12 @@ class Poster:
         if self.is_message_not_empty:
             action_chain = ActionChains(self.current_driver)
             action_chain.send_keys(message)
-            if self.count_lines(message) > 3:
+            if self.pic_path is not None:
+                self.get_picture(self.pic_path)
+                action_chain.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+                action_chain.send_keys(Keys.TAB * 11)
+                action_chain.perform()
+            elif self.count_lines(message) > 3:
                 action_chain.send_keys(Keys.TAB * 8)
             else:
                 action_chain.send_keys(Keys.TAB * 9)

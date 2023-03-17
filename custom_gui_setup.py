@@ -8,7 +8,7 @@ customtkinter.set_default_color_theme("green")  # Themes: blue (default), dark-b
 
 
 def file_dialog_wrapper(on_open_file):
-    file_path = fd.askopenfilename(filetypes=[("Text files", ".txt")])
+    file_path = fd.askopenfilename(filetypes=[('text files or image', ('.png', '.jpg', '.txt'))])
     on_open_file(file_path)
 
 
@@ -44,9 +44,14 @@ class AutoPosterGUI:
         self.posting_btn = customtkinter.CTkButton(master=self.win, text="Start posting!", width=100,
                                                    command=lambda: self.start_posting())
 
-        self.open_btn = customtkinter.CTkButton(master=self.win, text="Open file", width=100,
+        self.open_btn = customtkinter.CTkButton(master=self.win, text="Open txt file", width=100,
                                                 command=lambda: file_dialog_wrapper(
                                                     on_open_file=self.poster.handle_open_file))
+
+        self.pic_btn = customtkinter.CTkButton(master=self.win, text="Open picture", width=100,
+                                               command=lambda: file_dialog_wrapper(
+                                                   on_open_file=self.poster.handle_open_pic))
+
         self.label_group = customtkinter.CTkLabel(master=self.win, text="The link for the processed group will be here")
         self.text_txt = customtkinter.CTkTextbox(master=self.win, width=310)
         self.setup_gui()
@@ -69,6 +74,7 @@ class AutoPosterGUI:
         self.open_btn.grid(row=2, column=2, sticky="nw", padx=5, pady=5)
         self.label_group.grid(row=3, column=0, sticky="nw", padx=5, pady=5, columnspan=3)
         self.help_btn.grid(row=4, column=2, padx=5, pady=5)
+        self.pic_btn.grid(row=4, column=0, sticky="nw", padx=5, pady=5)
 
     def create_login_component(self):
         self.login_entry.grid(row=0, column=0, padx=5, pady=5, sticky="nw")
@@ -139,6 +145,12 @@ book, например ':)' и тд... Надеюсь, сделаю это по�
             self.open_btn.configure(state="disabled")
         else:
             self.open_btn.configure(state="normal")
+
+    def status_switch_pic_btn(self):
+        if self.poster.is_posting:
+            self.pic_btn.configure(state="disabled")
+        else:
+            self.pic_btn.configure(state="normal")
 
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
