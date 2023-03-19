@@ -17,8 +17,6 @@ from selenium.webdriver.support import expected_conditions as ec
 
 COOKIE_BUTTON_PATH = "/html/body/div[3]/div[2]/div/div/div/div/div[3]/button[2]"
 
-LOGIN_BUTTON_PATH = "/html/body/div[1]/div[1]/div[1]/div/div[2]/div[2]/form/div/div[3]/button"
-
 HOME_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[3]/div[3]/div/div[1]/div/div[1]/div/div/div[1]/div/div/div[" \
                    "1]/span/div/a/i"
 
@@ -34,7 +32,6 @@ PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div
                      "[2]/div[4]/div/span/div/div/div[1]/div/div/div[1]/i"
 
 ADD_TO_POST = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
-
 ADD_TO_POST_1 = "/html/body/div[1]/div/div[1]/div/div[4]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[3]/div[1]/div[1]/div"
 
 ANOTHER_PEOPLE_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[" \
@@ -46,11 +43,6 @@ LOADING_POST = ["//span[text()='Publikowanie']", "//span[text()='Posting']", "//
 STREAM_BUTTON = ["//span[text()='Transmisja wideo na żywo']", "//span[text()='Live video']",
                  "//span[text()='Прямой эфир']"]
 
-BLOCK_WARNING = ["//span[text()='powiadom nas o tym']", "//span[text()='let us know']",
-                 "//span[text()='дайте нам знать']"]
-
-CAN_NOT_POSTING_ALERT = "/html/body/div[4]/div[1]/div/div[2]/div/div/div/div/div[3]/div/div[1]/div"
-
 STREAM_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
 STREAM_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[1]"
 
@@ -59,6 +51,7 @@ PHOTO_VIDEO_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/di
 
 FEELING_ACTIVITY_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
 FEELING_ACTIVITY_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
+
 
 
 class Poster:
@@ -85,6 +78,7 @@ class Poster:
     def bind_gui(self, gui):
         self.gui = gui
 
+    # handlers
     def handle_open_file(self, file):
         self.set_groups_from_file(file)
 
@@ -93,21 +87,6 @@ class Poster:
 
     def handle_check_box(self):
         return self.gui.checkbox.get()
-
-    def stop_execution(self):
-        self.is_posting = False
-
-    def what_is_language(self):
-        for i in STREAM_BUTTON:
-            try:
-                WebDriverWait(self.current_driver, 2, 0.3).until(
-                    ec.visibility_of_element_located((By.XPATH, i)))
-                return self.language_id
-            except TimeoutException:
-                self.language_id += 1
-                if self.language_id > len(STREAM_BUTTON):
-                    self.home_page()
-                    mb.showerror("Your account language is not supported, switch it to PL, ENG or RUS")
 
     def handle_login(self, login: str, password: str):
         if len(login) > 0 and len(password) > 0:
@@ -120,6 +99,31 @@ class Poster:
         posting_thread = threading.Thread(target=self.start_posting, args=(message,), daemon=True)
         posting_thread.start()
 
+    def what_is_language(self) -> int:
+        for i in STREAM_BUTTON:
+            try:
+                WebDriverWait(self.current_driver, 2, 0.3).until(
+                    ec.visibility_of_element_located((By.XPATH, i)))
+                return self.language_id
+            except TimeoutException:
+                self.language_id += 1
+                if self.language_id > len(STREAM_BUTTON):
+                    self.home_page()
+                    mb.showerror("Your account language is not supported, switch it to PL, ENG or RUS")
+
+    def stop_execution(self) -> bool:
+        self.is_posting = False
+        return self.is_posting
+
+    # cookies
+    def save_cookies(self) -> None:
+        pickle.dump(self.current_driver.get_cookies(), open(f"session", "wb"))
+
+    def load_cookies(self) -> None:
+        for cookie in pickle.load(open("session", "rb")):
+            self.current_driver.add_cookie(cookie)
+
+    # let's auth
     def auth(self, login, password) -> None:
         try:
             self.gui.status_switch_auth_btn_off()
@@ -137,6 +141,7 @@ class Poster:
                 self.current_driver.find_element(By.NAME, "login").click()
             except NoSuchElementException:
                 self.current_driver.quit()
+                self.is_driver_online = False
                 mb.showerror("error")
 
             if not self.is_logged_in():
@@ -144,9 +149,10 @@ class Poster:
                 self.gui.status_switch_auth_btn_on()
                 mb.showinfo("Warning!", "Your login or password is incorrect")
                 return
+            else:
+                self.save_cookies()
+                self.what_is_language()
 
-            self.save_cookies()
-            self.what_is_language()
             self.gui.handle_logged_in()
             self.gui.status_switch_stop_posting_btn()
             self.current_driver.quit()
@@ -154,13 +160,6 @@ class Poster:
 
         except InvalidSessionIdException:
             pass
-
-    def save_cookies(self):
-        pickle.dump(self.current_driver.get_cookies(), open(f"session", "wb"))
-
-    def load_cookies(self):
-        for cookie in pickle.load(open("session", "rb")):
-            self.current_driver.add_cookie(cookie)
 
     def is_stream_button_exist(self) -> bool:
         try:
@@ -196,10 +195,18 @@ class Poster:
         except TimeoutException:
             try:
                 WebDriverWait(self.current_driver, 1, 0.5).until(
-                    ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH)))
+                    ec.visibility_of_element_located((By.XPATH, FEELING_ACTIVITY_BUTTON_XPATH_1)))
                 return True
             except TimeoutException:
                 return False
+
+    def is_forgot_password_exist(self) -> bool:
+        try:
+            WebDriverWait(self.current_driver, 1, 0.5).until(
+                ec.visibility_of_element_located((By.ID, "login_link")))
+            return True
+        except TimeoutException:
+            return False
 
     def is_logged_in(self) -> bool:
         if self.is_stream_button_exist() or self.is_photo_video_button_exist() or \
