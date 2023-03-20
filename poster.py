@@ -53,7 +53,6 @@ FEELING_ACTIVITY_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div
 FEELING_ACTIVITY_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
 
 
-
 class Poster:
     def __init__(self):
         self.is_posting = False
@@ -67,7 +66,7 @@ class Poster:
         self.pic_path = None
         self.language_id = 0  # if = 0 PL, 1 - ENG, 2 - RU
 
-    def start_driver(self):
+    def start_driver(self) -> None:
         self.current_driver = webdriver.Chrome(
             executable_path=r'/tmp/chrome/chromedriver.exe',
             options=self.options)
@@ -75,27 +74,25 @@ class Poster:
         self.current_driver.set_window_size(1920, 1080)
         self.home_page()
 
-    def bind_gui(self, gui):
+    def bind_gui(self, gui) -> None:
         self.gui = gui
 
     # handlers
-    def handle_open_file(self, file):
+    def handle_open_file(self, file) -> None:
         self.set_groups_from_file(file)
 
-    def handle_open_pic(self, file):
+    def handle_open_pic(self, file) -> None:
         self.pic_path = file
 
-    def handle_check_box(self):
-        return self.gui.checkbox.get()
 
-    def handle_login(self, login: str, password: str):
+    def handle_login(self, login: str, password: str) -> None:
         if len(login) > 0 and len(password) > 0:
             auth_thread = threading.Thread(target=self.auth, args=(login, password), daemon=True)
             auth_thread.start()
         else:
             mb.showwarning("Warning", "Login and password can not be empty")
 
-    def handle_posting(self, message):
+    def handle_posting(self, message: str) -> None:
         posting_thread = threading.Thread(target=self.start_posting, args=(message,), daemon=True)
         posting_thread.start()
 
@@ -111,7 +108,7 @@ class Poster:
                     self.home_page()
                     mb.showerror("Your account language is not supported, switch it to PL, ENG or RUS")
 
-    def stop_execution(self) -> bool:
+    def stop_execution(self):
         self.is_posting = False
         return self.is_posting
 
@@ -159,7 +156,7 @@ class Poster:
             self.is_driver_online = False
 
         except InvalidSessionIdException:
-            pass
+            print("script was closed with :", InvalidSessionIdException)
 
     def is_stream_button_exist(self) -> bool:
         try:
@@ -285,7 +282,7 @@ class Poster:
         except TimeoutException:
             return False
 
-    def home_page(self):
+    def home_page(self) -> None:
         self.current_driver.get("https://facebook.com")
 
     @staticmethod
@@ -295,7 +292,7 @@ class Poster:
     def is_links_not_empty(self) -> bool:
         return len(self.links) > 0
 
-    def set_groups_from_file(self, file_path: str):
+    def set_groups_from_file(self, file_path: str) -> None:
         if self.is_file_path_not_empty(file_path):
             self.links = set()
             with open(file_path) as file:
@@ -305,7 +302,7 @@ class Poster:
         if len(self.links):
             self.gui.handle_auth_btn()
 
-    def get_picture(self, file_path: str):
+    def get_picture(self, file_path: str) -> None:
         if self.is_file_path_not_empty(file_path):
             image = Image.open(file_path)
             output = io.BytesIO()
@@ -318,7 +315,7 @@ class Poster:
             win32clipboard.CloseClipboard()
 
     @staticmethod
-    def count_lines(message: str):
+    def count_lines(message: str) -> int:
         counter = collections.Counter(message)
         num_of_new_line = counter["\n"]
         return num_of_new_line
@@ -328,7 +325,7 @@ class Poster:
         if len(message) == 0:
             return False
 
-    def write_message(self, message: str):
+    def write_message(self, message: str) -> None:
         if self.is_message_not_empty:
             action_chain = ActionChains(self.current_driver)
             action_chain.send_keys(message)
@@ -388,7 +385,9 @@ class Poster:
                             self.is_loading_post_disappeared()
                             continue
             except InvalidSessionIdException:
-                pass
+                print("program was closed with", InvalidSessionIdException)
+            except KeyboardInterrupt:
+                print("program was closed with", KeyboardInterrupt)
             finally:
                 self.current_driver.quit()
                 self.gui.status_switch_posting_btn()
@@ -401,7 +400,7 @@ class Poster:
         else:
             return mb.showerror("Error", "Link to group can not be empty")
 
-    def is_loading_post_disappeared(self):
+    def is_loading_post_disappeared(self) -> None:
         while True:
             try:
                 self.current_driver.find_element(By.XPATH, LOADING_POST[self.language_id])

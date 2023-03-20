@@ -35,11 +35,11 @@ class AutoPosterGUI:
                                                                                          self.password_entry.get()))
 
         self.help_btn = customtkinter.CTkButton(master=self.win, text="Help me!", width=100,
-                                                command=lambda: self.how_to_use())
+                                                command=self.how_to_use)
         self.password_entry = customtkinter.CTkEntry(master=self.win, placeholder_text="Your password", width=200,
                                                      show="*")
         self.stop_posting_btn = customtkinter.CTkButton(master=self.win, text="Stop posting!", width=100,
-                                                        command=lambda: self.poster.stop_execution())
+                                                        command=self.poster.stop_execution)
 
         self.posting_btn = customtkinter.CTkButton(master=self.win, text="Start posting!", width=100,
                                                    command=lambda: self.start_posting())
