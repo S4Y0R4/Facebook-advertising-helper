@@ -84,7 +84,6 @@ class Poster:
     def handle_open_pic(self, file) -> None:
         self.pic_path = file
 
-
     def handle_login(self, login: str, password: str) -> None:
         if len(login) > 0 and len(password) > 0:
             auth_thread = threading.Thread(target=self.auth, args=(login, password), daemon=True)
@@ -364,9 +363,9 @@ class Poster:
                 self.gui.status_switch_stop_posting_btn()
                 self.gui.status_switch_open_btn()
                 self.start_driver()
+                self.is_posting = True
                 self.is_driver_online = True
                 self.load_cookies()
-                self.home_page()
                 if self.is_cookie_button_exist():
                     self.current_driver.find_element(By.XPATH, COOKIE_BUTTON_PATH).click()
                 for group in self.links:
@@ -384,11 +383,10 @@ class Poster:
                             self.write_message(message)
                             self.is_loading_post_disappeared()
                             continue
-            except InvalidSessionIdException:
-                print("program was closed with", InvalidSessionIdException)
-            except KeyboardInterrupt:
-                print("program was closed with", KeyboardInterrupt)
+            except Exception as e:
+                print(e)
             finally:
+                self.is_posting = False
                 self.current_driver.quit()
                 self.gui.status_switch_posting_btn()
                 self.gui.status_switch_stop_posting_btn()
