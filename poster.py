@@ -61,7 +61,7 @@ class Poster:
         self.links = set()
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--disable-notifications")
-        self.options.headless = False
+        self.options.headless = False  # IF U NEED DISABLE CHROME VISION TURN IT TO TRUE
         self.current_driver = None
         self.pic_path = None
         self.language_id = 0  # if = 0 PL, 1 - ENG, 2 - RU
