@@ -15,7 +15,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 
-COOKIE_BUTTON_PATH = "/html/body/div[3]/div[2]/div/div/div/div/div[3]/button[2]"
+COOKIE_BUTTON_PATH = "/html/body/div[3]/div[2]/div/div/div/div/div[4]/button[2]"
 
 HOME_BUTTON_PATH = "/html/body/div[1]/div/div[1]/div/div[3]/div[3]/div/div[1]/div/div[1]/div/div/div[1]/div/div/div[" \
                    "1]/span/div/a/i"
@@ -51,6 +51,10 @@ PHOTO_VIDEO_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/di
 
 FEELING_ACTIVITY_BUTTON_XPATH = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div/div[2]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
 FEELING_ACTIVITY_BUTTON_XPATH_1 = "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[3]/div/div/div[1]/div[1]/div/div[1]/div/div/div/div[3]/div/div[2]/div/div/div/div[2]/div[3]"
+
+INPUT_CONTENT_PATH = "/html/body/div[1]/div/div[1]/div/div[6]/div/div/div[1]/div/div[2]/div/div/div/div/div[1]/form/div/div[1]/div/div/div[1]/div/div[2]/div[1]/div[1]/div[2]/div/div[1]/div/div[1]/input"
+INPUT_CONTENT_PATH_1 = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div[4]/div/div[2]/div/div/div[1]/div[2]/div/div[3]/div/div/div/div/div/div/div/div/div/div[8]/div/div/div[4]/div/div/div[2]/div[2]/div/div/div/div/div[2]/div[1]/form/div/div/div[2]/ul/li[3]/input"
+
 
 
 class Poster:
@@ -301,6 +305,14 @@ class Poster:
         if len(self.links):
             self.gui.handle_auth_btn()
 
+    def is_input_content_path(self):
+        try:
+            WebDriverWait(self.current_driver, 1, 0.3).until(
+                ec.visibility_of_element_located((By.XPATH, INPUT_CONTENT_PATH)))
+            return True
+        except TimeoutException:
+            return False
+
     def get_picture(self, file_path: str) -> None:
         if self.is_file_path_not_empty(file_path):
             image = Image.open(file_path)
@@ -328,11 +340,9 @@ class Poster:
         if self.is_message_not_empty:
             action_chain = ActionChains(self.current_driver)
             action_chain.send_keys(message)
-            if self.pic_path is not None:
-                self.get_picture(self.pic_path)
-                action_chain.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
-                action_chain.send_keys(Keys.TAB * 11)
-                action_chain.perform()
+            if self.pic_path is not None and self.is_input_content_path():
+                file_input = self.current_driver.find_element_by_xpath(INPUT_CONTENT_PATH)
+                file_input.send_keys(self.pic_path)
             elif self.count_lines(message) > 3:
                 action_chain.send_keys(Keys.TAB * 8)
             else:
@@ -376,6 +386,7 @@ class Poster:
                             write_something = self.current_driver.find_element(By.XPATH,
                                                                                WRITE_SOMETHING_PATH[self.language_id])
                             button = self.get_clickable_button(write_something)
+                            time.sleep(10)
                             button.click()
                         else:
                             continue
@@ -383,7 +394,10 @@ class Poster:
                             self.write_message(message)
                             self.is_loading_post_disappeared()
                             continue
+                        else:
+                            continue
             except Exception as e:
+                time.sleep(30)
                 print(e)
             finally:
                 self.is_posting = False
