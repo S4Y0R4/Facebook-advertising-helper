@@ -18,6 +18,7 @@
 1. Клонировать репозиторий:
 
 git clone https://github.com/your-username/facebook-group-posting-bot.git
+
 cd facebook-group-posting-bot
 
 2. Использование
